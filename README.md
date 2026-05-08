@@ -167,6 +167,4 @@ Through this project, I gained practical experience in:
 
 ---
 
-## 👩‍💻 Author
 
-DIKSHA WAGHMARE
