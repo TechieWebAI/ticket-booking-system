@@ -2,9 +2,7 @@
 
 A full-stack ticket booking system inspired by real-world platforms like BookMyShow, designed to handle concurrent booking requests using seat locking and expiry mechanisms.
 
-## 🌐 Live Demo
 
-Live Project: https://your-render-link.onrender.com
 
 ---
 
