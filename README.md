@@ -20,7 +20,7 @@ A full-stack ticket booking system inspired by real-world platforms like BookMyS
 
 ## 📷 Project Preview
 
-<img width="100%" alt="Ticket Booking System" src="screenshot.png">
+<img width="100%" alt="Ticket Booking System" src="Screenshot.png">
 
 ---
 
