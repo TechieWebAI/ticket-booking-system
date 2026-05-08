@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ticket Booking System</title>
+
+    <style>
+
+        /* ---------- GENERAL ---------- */
+
+        body {
+            font-family: Arial, sans-serif;
+            background: #f5f6fa;
+            margin: 0;
+            text-align: center;
+        }
+
+        /* ---------- NAVBAR ---------- */
+
+        .navbar {
+            background: #2f3640;
+            color: white;
+            padding: 18px;
+            font-size: 22px;
+            font-weight: bold;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .navbar span {
+            font-size: 14px;
+            font-weight: normal;
+            opacity: 0.8;
+        }
+
+        /* ---------- MAIN CONTAINER ---------- */
+
+        .container {
+            width: 65%;
+            margin: 40px auto;
+            background: white;
+            padding: 30px;
+            border-radius: 14px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        /* ---------- LEGEND ---------- */
+
+        .legend {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin: 20px 0;
+            font-size: 14px;
+        }
+
+        .box {
+            display: inline-block;
+            width: 15px;
+            height: 15px;
+            border-radius: 4px;
+            margin-right: 5px;
+        }
+
+        .available-box {
+            background: #dfe6e9;
+        }
+
+        .locked-box {
+            background: #ffeaa7;
+        }
+
+        .booked-box {
+            background: #fab1a0;
+        }
+
+        /* ---------- SEAT GRID ---------- */
+
+        .seats {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 12px;
+            margin-top: 20px;
+        }
+
+        button {
+            padding: 14px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        small {
+            font-size: 12px;
+            opacity: 0.8;
+        }
+
+        /* ---------- SEAT STATUS ---------- */
+
+        .available {
+            background: #dfe6e9;
+            color: #2d3436;
+        }
+
+        .available:hover {
+            background: #b2bec3;
+        }
+
+        .locked {
+            background: #ffeaa7;
+            color: #2d3436;
+        }
+
+        .booked {
+            background: #fab1a0;
+            color: #2d3436;
+            cursor: not-allowed;
+        }
+
+        /* ---------- INFO SECTION ---------- */
+
+        .info-box {
+            margin-top: 25px;
+        }
+
+        .confirm-btn {
+            margin-top: 10px;
+            padding: 10px 18px;
+            background: #74b9ff;
+            color: white;
+            border-radius: 6px;
+        }
+
+        .confirm-btn:hover {
+            background: #0984e3;
+        }
+
+        .footer-text {
+            margin-top: 15px;
+            font-size: 13px;
+            color: #636e72;
+        }
+
+        /* ---------- MESSAGE BOX ---------- */
+
+        #messageBox {
+            margin-top: 15px;
+            padding: 10px;
+            background: #ecf0f1;
+            border-radius: 6px;
+            display: none;
+            color: #2d3436;
+            font-weight: 500;
+        }
+
+        #messageBox button {
+            margin-left: 10px;
+            padding: 5px 10px;
+            background: #636e72;
+            color: white;
+            border-radius: 4px;
+        }
+
+    </style>
+</head>
+
+<body>
+
+    <!-- NAVBAR -->
+
+    <div class="navbar">
+        🎟 Ticket Booking System
+        <span>| Real-time Seat Locking Demo</span>
+    </div>
+
+    <!-- MAIN CONTAINER -->
+
+    <div class="container">
+
+        <!-- LEGEND -->
+
+        <div class="legend">
+            <div>
+                <span class="box available-box"></span>
+                Available
+            </div>
+
+            <div>
+                <span class="box locked-box"></span>
+                Locked
+            </div>
+
+            <div>
+                <span class="box booked-box"></span>
+                Booked
+            </div>
+        </div>
+
+        <!-- SEATS -->
+
+        <div class="seats" id="seats"></div>
+
+        <!-- INFO SECTION -->
+
+        <div class="info-box">
+
+            <p id="selectedSeatText">
+                No seat selected
+            </p>
+
+            <button class="confirm-btn" onclick="bookSeat()">
+                Confirm Booking
+            </button>
+
+            <p class="footer-text">
+                Seat locks expire automatically after 60 seconds.
+            </p>
+
+            <!-- MESSAGE BOX -->
+
+            <div id="messageBox">
+                <span id="messageText"></span>
+
+                <button onclick="closeMessage()">
+                    OK
+                </button>
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- JAVASCRIPT -->
+
+    <script>
+
+        let selectedSeat = null;
+
+        // Show message box
+
+        function showMessage(message) {
+            document.getElementById("messageText").innerText = message;
+            document.getElementById("messageBox").style.display = "block";
+        }
+
+        // Close message box
+
+        function closeMessage() {
+            document.getElementById("messageBox").style.display = "none";
+        }
+
+        // Load seats from backend
+
+        function loadSeats() {
+
+            fetch('/seats')
+                .then(response => response.json())
+                .then(data => {
+
+                    let html = "";
+
+                    data.forEach(seat => {
+
+                        let className = "available";
+
+                        if (seat.status === "locked") {
+                            className = "locked";
+                        }
+
+                        if (seat.status === "booked") {
+                            className = "booked";
+                        }
+
+                        html += `
+                            <button 
+                                class="${className}"
+                                onclick="${seat.status === 'available'
+                                    ? `lockSeat(${seat.id})`
+                                    : ''}">
+
+                                ${seat.seat_number}
+                                <br>
+
+                                <small>
+                                    (${seat.status})
+                                </small>
+
+                            </button>
+                        `;
+                    });
+
+                    document.getElementById("seats").innerHTML = html;
+                });
+        }
+
+        // Lock selected seat
+
+        function lockSeat(seatId) {
+
+            fetch('/lock', {
+                method: 'POST',
+
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+
+                body: JSON.stringify({
+                    seat_id: seatId
+                })
+            })
+
+            .then(response => response.json())
+
+            .then(data => {
+
+                if (data.message.includes("locked")) {
+
+                    selectedSeat = seatId;
+
+                    document.getElementById("selectedSeatText").innerText =
+                        "Selected Seat ID: " + seatId;
+
+                    showMessage(
+                        "Seat locked. Confirm booking within 60 seconds."
+                    );
+
+                } else {
+
+                    showMessage(data.message);
+                }
+
+                loadSeats();
+            });
+        }
+
+        // Confirm booking
+
+        function bookSeat() {
+
+            if (!selectedSeat) {
+
+                showMessage("Please select a seat first.");
+                return;
+            }
+
+            fetch('/book', {
+
+                method: 'POST',
+
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+
+                body: JSON.stringify({
+                    seat_id: selectedSeat
+                })
+            })
+
+            .then(response => response.json())
+
+            .then(data => {
+
+                showMessage("Booking confirmed.");
+
+                selectedSeat = null;
+
+                document.getElementById("selectedSeatText").innerText =
+                    "No seat selected";
+
+                loadSeats();
+            });
+        }
+
+        // Initial seat load
+
+        loadSeats();
+
+    </script>
+
+</body>
+</html>
